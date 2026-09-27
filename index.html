@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>НАСТОЯЩИЙ МИРАС? ♥</title>
+
+    <!-- Пиксельные шрифты в духе Undertale:
+       Press Start 2P — заголовки, HP и меню, Pixelify Sans — диалоги.
+       Оба поддерживают кириллицу; без интернета сработает моноширинный фолбэк. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- ============ СТАРТОВЫЙ ЭКРАН ============ -->
+    <section id="start-screen" class="screen active">
+      <div class="card">
+        <span class="soul">♥</span>
+        <h1>НАСТОЯЩИЙ <span class="accent">МИРАС</span>?</h1>
+        <p class="subtitle">
+          * Ты утверждаешь, что ты — Мирас?<br />* Тогда докажи это.
+        </p>
+        <div class="controls-box">
+          <p>* СТРЕЛКИ / WASD — ходить по коридору</p>
+          <p>* ПРОБЕЛ — заговорить с учеником</p>
+          <p>* ПРОБЕЛ / Z / ENTER — выбрать ответ в бою</p>
+          <p>* СЕРДЦА — за верные ответы. Собери все 7!</p>
+        </div>
+        <button id="start-btn" class="btn">
+          <span class="heart">♥</span>НАЧАТЬ
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ ЭКРАН ИГРЫ: коридор + боевой экран ============ -->
+    <section id="game-screen" class="screen">
+      <div id="stage">
+        <canvas id="game" width="240" height="160"></canvas>
+
+        <!-- HP-строка, как в бою Undertale -->
+        <div id="hud">
+          <div class="progress-wrap">
+            <div class="progress-labels">
+              <span class="meter-name"
+                >МИРАС&nbsp;&nbsp;LVL 15&nbsp;&nbsp;HP</span
+              >
+              <span id="hp-label">20 / 20</span>
+            </div>
+            <div class="progress-bar">
+              <div id="hp-fill" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- Ряд сердец за верные ответы (7 цветов, как души в Undertale) -->
+          <div id="hearts-row" aria-label="Собранные сердца"></div>
+        </div>
+
+        <!-- ====== БОЕВОЙ ЭКРАН (реплика интерфейса Undertale) ====== -->
+        <div id="battle" hidden>
+          <!-- центральная колонка и две боковые, разделённые на две секции -->
+          <div id="battle-board">
+            <div class="board-side"><i></i><i></i></div>
+            <div class="board-main"><img id="battle-enemy" alt="" /></div>
+            <div class="board-side"><i></i><i></i></div>
+          </div>
+
+          <!-- большой горизонтальный диалоговый бокс: рамка + вопрос -->
+          <div id="battle-text">* Вопрос</div>
+
+          <!-- строка HP: «HP» жёлтым, жёлтая полоска, «20/20» жёлтым -->
+          <div id="battle-hp">
+            <span class="hp-tag">HP</span>
+            <div class="hp-track"><i id="battle-hp-fill"></i></div>
+            <span id="battle-hp-label">20/20</span>
+          </div>
+
+          <!-- четыре командные кнопки: иконка + вариант ответа -->
+          <div id="battle-choices"></div>
+        </div>
+      </div>
+      <p class="key-hint" id="key-hint">
+        * СТРЕЛКИ — ходьба · ПРОБЕЛ — говорить
+      </p>
+    </section>
+
+    <!-- ============ ФИНАЛ: комната с глазами и тортом (Portal) ============ -->
+    <section id="portal-screen" class="screen">
+      <div id="stage-finale">
+        <canvas id="finale" width="240" height="160"></canvas>
+        <div id="hb-text" class="hidden">HAPPY BIRTHDAY</div>
+        <div id="finale-ui" class="hidden">
+          <p id="hb-sub">
+            * Ты настоящий Мирас. Твой LVL повысился.<br />* С ДНЁМ РОЖДЕНИЯ,
+            МИРАС! ♥
+          </p>
+          <button class="btn restart-btn">
+            <span class="heart">♥</span>ПРОЙТИ ЗАНОВО
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ВЫЖИЛ, НО НЕ 7/7: без торта и песни ============ -->
+    <section id="survive-screen" class="screen">
+      <div class="card">
+        <span class="soul soul-dim">♥</span>
+        <h1>ВЫ ПРОШЛИ ИГРУ</h1>
+        <p class="subtitle">
+          * Спасибо, что дошли до конца!<br />* Но сердец собрано мало —
+          настоящий ли ты Мирас?
+        </p>
+        <button class="btn restart-btn">
+          <span class="heart">♥</span>ПОПРОБОВАТЬ СНОВА
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ «ИМПОСТЕР» (HP = 0): белый фон, чёрный текст, кровь сверху ============ -->
+    <section id="impostor-screen" class="screen">
+      <div class="impostor-text">YOU AR DA IMPOSTA</div>
+      <div class="blood-layer">
+        <div id="blood-streams"></div>
+        <div id="blood-drops"></div>
+      </div>
+    </section>
+
+    <!-- ============ СКРИМЕР ============ -->
+    <section id="scream-screen" class="screen">
+      <img id="scream-face" alt="АААА!" />
+    </section>
+
+    <!-- Кнопка перезапуска после скримера -->
+    <button id="retry-btn" class="btn">
+      <span class="heart">♥</span>ПОПРОБОВАТЬ ЕЩЁ РАЗ
+    </button>
+
+    <script src="script.js"></script>
+  </body>
+</html>

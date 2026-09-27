@@ -1,0 +1,521 @@
+/* ============================================================
+   НАСТОЯЩИЙ МИРАС? — ходилка по школе в стиле UNDERTALE
+   Чёрный фон со звёздами · белые рамки · оранжевое меню ·
+   красное сердечко-душа · жёлтая HP-полоска · кровь · скример
+   ============================================================ */
+
+:root {
+  --ut-white: #FFFFFF;
+  --ut-orange: #FF9E00;   /* пункты меню */
+  --ut-yellow: #FFFF00;   /* выбранный пункт и HP */
+  --ut-red: #FF0000;      /* душа */
+  --ut-green: #00D000;
+  --blood: #8F0D0D;
+  --blood-dark: #5E0606;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Pixelify Sans', 'Press Start 2P', monospace;
+  color: var(--ut-white);
+  min-height: 100vh;
+  background-color: #000;
+  overflow-x: hidden;
+}
+
+/* ---------- Звёздное небо ---------- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(#fff 1px, transparent 1.6px),
+    radial-gradient(#9ad9ff 1px, transparent 1.6px),
+    radial-gradient(rgba(255,255,255,.5) 1px, transparent 1.6px);
+  background-size: 260px 260px, 340px 340px, 420px 420px;
+  background-position: 0 0, 90px 130px, 170px 50px;
+  animation: starfield 90s linear infinite;
+}
+@keyframes starfield {
+  to { background-position: 0 260px, 90px 470px, 170px 470px; }
+}
+
+/* CRT-полоски для ретро-вайба */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, transparent 2px 4px);
+}
+
+/* ---------- Экраны ---------- */
+.screen {
+  display: none;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 24px 12px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.screen.active { display: flex; }
+
+.hidden { display: none !important; }
+
+/* ---------- Стартовый экран ---------- */
+.card {
+  position: relative;
+  z-index: 2;
+  width: min(94vw, 640px);
+  background: #000;
+  border: 4px solid var(--ut-white);
+  padding: 28px 24px;
+  text-align: center;
+}
+
+h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(1rem, 3.6vw, 1.6rem);
+  line-height: 1.6;
+  margin: 12px 0 16px;
+}
+.accent { color: var(--ut-yellow); }
+
+.soul {
+  display: inline-block;
+  color: var(--ut-red);
+  font-size: 2rem;
+  line-height: 1;
+  animation: soul-beat 1s steps(2) infinite;
+}
+@keyframes soul-beat { 50% { transform: scale(1.18); } }
+
+.subtitle, .controls-box {
+  font-size: 1.1rem;
+  line-height: 1.65;
+  font-weight: 600;
+}
+.subtitle { margin-bottom: 16px; }
+
+.controls-box {
+  text-align: left;
+  border: 2px solid #3a3a3a;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  background: #0A0A0F;
+}
+
+.hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem;
+  line-height: 1.9;
+  margin-top: 18px;
+  opacity: .8;
+  animation: blink 1.4s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: .25; } }
+
+.key-hint { font-size: .85rem; margin-top: 12px; color: #9a9a9a; text-align: center; min-height: 1.3em; }
+
+/* ---------- Кнопки (оранжевые, с сердечком при наведении) ---------- */
+.btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .75rem;
+  line-height: 1.6;
+  color: var(--ut-orange);
+  background: transparent;
+  border: 3px solid var(--ut-orange);
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: color .08s steps(2), border-color .08s steps(2);
+}
+.btn .heart { color: var(--ut-red); margin-right: 10px; opacity: 0; }
+.btn:hover, .btn:focus-visible { color: var(--ut-yellow); border-color: var(--ut-yellow); }
+.btn:hover .heart, .btn:focus-visible .heart { opacity: 1; }
+
+/* ============================================================
+   ИГРОВОЙ ЭКРАН
+   ============================================================ */
+#stage {
+  position: relative;
+  width: min(94vw, 720px);
+  aspect-ratio: 3 / 2;
+  background: #000;
+  border: 4px solid var(--ut-white);
+  overflow: hidden;
+}
+#game, #finale {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* урон: красная виньетка + тряска */
+#stage.hurt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 52%, rgba(255,0,0,.5));
+  animation: hurt-flash .5s steps(3) 1;
+}
+@keyframes hurt-flash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+#stage.shake { animation: stage-shake .32s steps(2) 2; }
+@keyframes stage-shake {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-5px, 3px); }
+  50%  { transform: translate(4px, -4px); }
+  75%  { transform: translate(-3px, -2px); }
+  100% { transform: translate(3px, 2px); }
+}
+
+/* ---------- HP-строка (как в бою Undertale) ---------- */
+#hud {
+  position: absolute;
+  top: 8px; left: 8px; right: 8px;
+  z-index: 4;
+}
+.progress-wrap { text-align: left; }
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .48rem;
+  margin-bottom: 5px;
+  text-shadow: 1px 1px 0 #000;
+}
+.meter-name { color: var(--ut-yellow); }
+#hp-label { color: var(--ut-white); }
+.progress-bar {
+  height: 14px;
+  border: 2px solid var(--ut-white);
+  background: #4d0000;
+}
+#hp-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--ut-yellow);
+  transition: width .25s steps(6);
+}
+
+/* ---------- Ряд сердец за верные ответы (цвета душ Undertale) ---------- */
+#hearts-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+.h-slot {
+  width: 16px;
+  height: 16px;
+  color: #3a3a3a; /* пустой слот — тёмное сердце */
+  opacity: .55;
+}
+.h-slot svg { width: 100%; height: 100%; display: block; }
+.h-slot.h-got {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.h-slot.h-pop { animation: heart-pop .35s steps(4); }
+@keyframes heart-pop {
+  0%   { transform: scale(.2); }
+  40%  { transform: scale(1.5); }
+  70%  { transform: scale(.85); }
+  100% { transform: scale(1); }
+}
+
+/* ============================================================
+   БОЕВОЙ ЭКРАН — реплика интерфейса Undertale
+   чёрный фон · колонки · белый диалоговый бокс ·
+   жёлтая HP-полоска · 4 командные кнопки с иконками
+   ============================================================ */
+#battle {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 8px;
+  gap: 7px;
+}
+#battle[hidden] { display: none; }
+
+/* --- большая центральная колонка и две двухсекционные по бокам --- */
+#battle-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+.board-side {
+  flex: 0 0 15%;
+  border: 2px solid var(--ut-white);
+  display: flex;
+  flex-direction: column;
+}
+.board-side i { flex: 1 1 0; display: block; }
+.board-side i + i { border-top: 2px solid var(--ut-white); }
+.board-main {
+  flex: 1 1 auto;
+  max-width: 46%;
+  margin: 0 8px;
+  border: 2px solid var(--ut-white);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+/* портрет ученика: целый множитель 8× от 12×17, чтобы пиксель оставался пикселем */
+#battle-enemy {
+  width: 96px;
+  height: 136px;
+  margin-bottom: 6px;
+  image-rendering: pixelated;
+}
+
+/* --- большой горизонтальный диалоговый бокс --- */
+#battle-text {
+  flex: 0 0 auto;
+  border: 3px solid var(--ut-white);
+  min-height: 4.4em;
+  padding: 10px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .62rem;
+  line-height: 1.9;
+  color: var(--ut-white);
+  overflow: hidden;
+}
+#battle-text.ok  { color: var(--ut-green); }
+#battle-text.bad { color: #FF3B3B; }
+
+/* --- строка HP: «HP» + жёлтая полоска + «40/40» --- */
+#battle-hp {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .58rem;
+  color: var(--ut-yellow);
+}
+.hp-tag { letter-spacing: 1px; }
+.hp-track {
+  flex: 0 1 320px;
+  width: 320px;
+  height: 16px;
+  background: #4d0000;
+  border: 2px solid var(--ut-white);
+  display: flex;
+}
+#battle-hp-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--ut-yellow);
+  transition: width .25s steps(6);
+}
+
+/* --- четыре командные кнопки: иконка + вариант ответа --- */
+#battle-choices {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  min-height: 3.4em;
+}
+.choice {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem;
+  line-height: 1.75;
+  color: var(--ut-orange);
+  background: transparent;
+  border: 2px solid var(--ut-orange);
+  padding: 8px 6px;
+  cursor: pointer;
+}
+.choice .ico { flex: 0 0 auto; width: 18px; height: 18px; color: var(--ut-orange); }
+.choice .lbl { overflow: hidden; text-overflow: ellipsis; }
+/* выбранный вариант меняет цвет с оранжевого на жёлтый */
+.choice.selected { color: var(--ut-yellow); border-color: var(--ut-yellow); }
+.choice.selected .ico { color: var(--ut-yellow); }
+.choice:disabled { cursor: default; }
+.choice.correct { color: var(--ut-green); border-color: var(--ut-green); }
+.choice.correct .ico { color: var(--ut-green); }
+.choice.wrong { color: #ff5b5b; border-color: #ff5b5b; animation: wobble .3s steps(2) 2; }
+.choice.wrong .ico { color: #ff5b5b; }
+@keyframes wobble { 50% { transform: translateX(-5px); } }
+
+/* ============================================================
+   ФИНАЛ: комната с глазами и тортом (Portal)
+   ============================================================ */
+#stage-finale {
+  position: relative;
+  width: min(94vw, 720px);
+  aspect-ratio: 3 / 2;
+  background: #000;
+  border: 4px solid var(--ut-white);
+  overflow: hidden;
+}
+
+/* HAPPY BIRTHDAY на весь экран (как титры Portal — на чёрном) */
+#hb-text {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(1.1rem, 4.6vw, 2.5rem);
+  line-height: 1.9;
+  letter-spacing: 3px;
+  color: var(--ut-white);
+  animation: hb-glow 2.4s steps(2) infinite;
+  opacity: 1;
+  transition: opacity 1.4s steps(8);
+}
+@keyframes hb-glow { 50% { color: var(--ut-yellow); } }
+
+#finale-ui {
+  position: absolute;
+  left: 0; right: 0; bottom: 12px;
+  z-index: 4;
+  text-align: center;
+}
+#hb-sub {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ============================================================
+   ВЫЖИЛ, НО НЕ 7/7: спокойный экран без торта
+   ============================================================ */
+.soul-dim { color: #555; animation: none; }
+
+/* ============================================================
+   «ИМПОСТЕР» (HP = 0): белый фон, чёрный текст, кровь сверху
+   ============================================================ */
+#impostor-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #fff;
+  padding: 0;
+}
+#impostor-screen.red { animation: redden 2.6s ease forwards; }
+@keyframes redden { to { background: var(--blood); } }
+
+.impostor-text {
+  position: relative;
+  z-index: 2;
+  color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(1.5rem, 6.5vw, 3.6rem);
+  line-height: 1.6;
+  text-align: center;
+  padding: 0 18px;
+  animation: flicker .14s steps(2) infinite alternate;
+}
+@keyframes flicker { to { opacity: .78; } }
+
+.blood-layer { position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+#blood-streams, #blood-drops { position: absolute; inset: 0; }
+
+.blood-stream {
+  position: absolute;
+  top: -12px;
+  background: linear-gradient(180deg, var(--blood-dark), #A80F0F 55%, #D42424);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 6px 16px rgba(90,0,0,.55);
+  transform: scaleY(0);
+  transform-origin: top;
+  animation: pour var(--d) ease-in forwards;
+}
+@keyframes pour {
+  80%  { transform: scaleY(1.03); }
+  100% { transform: scaleY(1); }
+}
+
+.blood-drop {
+  position: absolute;
+  top: -40px;
+  width: var(--s);
+  height: calc(var(--s) * 1.25);
+  background: radial-gradient(circle at 35% 30%, #FF5B5B, var(--blood) 72%);
+  border-radius: 50% 50% 60% 60%;
+  animation: drop-fall var(--d) linear forwards;
+}
+@keyframes drop-fall { to { transform: translateY(115vh); } }
+
+/* ---------- Скример ---------- */
+#scream-screen {
+  position: fixed;
+  inset: -26px;
+  z-index: 60;
+  background: #000;
+  padding: 0;
+}
+#scream-face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+#scream-screen.active {
+  animation: shake .09s linear infinite, strobe .3s steps(2) infinite;
+}
+@keyframes shake {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-14px, 9px); }
+  50%  { transform: translate(11px, -12px); }
+  75%  { transform: translate(-9px, -7px); }
+  100% { transform: translate(12px, 8px); }
+}
+@keyframes strobe { to { background: #4A0000; } }
+
+/* ---------- Кнопка перезапуска после скримера ---------- */
+#retry-btn {
+  display: none;
+  position: fixed;
+  left: 50%;
+  bottom: 7vh;
+  transform: translateX(-50%);
+  background: #000;
+  z-index: 70;
+}
+#retry-btn.show { display: block; animation: pop .25s steps(3); }
+@keyframes pop { from { transform: translateX(-50%) scale(.4); } }
+
+/* ---------- Мобильная версия ---------- */
+@media (max-width: 560px) {
+  .card { padding: 20px 14px; }
+  .subtitle, .controls-box { font-size: .98rem; }
+  h1 { font-size: 1rem; }
+  #battle { padding: 6px; gap: 5px; }
+  #battle-text { font-size: .45rem; min-height: 4em; padding: 7px 9px; }
+  #battle-choices { flex-wrap: wrap; }
+  .choice { flex: 1 1 42%; font-size: .42rem; padding: 6px 4px; }
+  .choice .ico { width: 14px; height: 14px; }
+  .board-side { flex: 0 0 10%; }
+  #battle-enemy { width: 60px; height: 85px; }
+}
