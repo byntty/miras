@@ -48,7 +48,7 @@ const QUESTIONS = [
       "твоя мама",
       "магическая шляпа",
     ],
-    correct: 0,
+    correct: 2,
   },
   {
     text: "откуда правильно начинать решать задачи? ",
@@ -145,6 +145,7 @@ const finaleUi = document.getElementById("finale-ui");
 const bloodStreams = document.getElementById("blood-streams");
 const bloodDrops = document.getElementById("blood-drops");
 const heartsRow = document.getElementById("hearts-row");
+const heartAward = document.getElementById("heart-award");
 const surviveScreen = document.getElementById("survive-screen");
 const screamFace = document.getElementById("scream-face");
 const metaLine = document.getElementById("meta-line");
@@ -650,15 +651,15 @@ const G = {
 
 /* ---------- Сердца за верные ответы (цвета душ Undertale) ---------- */
 
-// Порядок: красное, оранжевое, жёлтое, зелёное, синее, голубое, розовое
+// Порядок получения: розовое, голубое, синее, зелёное, оранжевое, жёлтое, красное
 const HEART_COLORS = [
-  "#FF0000",
+  "#FF6BD6",
+  "#00D2FF",
+  "#2E5BFF",
+  "#00D000",
   "#FF9E00",
   "#FFFF00",
-  "#00D000",
-  "#2E5BFF",
-  "#00D2FF",
-  "#FF6BD6",
+  "#FF0000",
 ];
 
 const HEART_SVG =
@@ -685,6 +686,41 @@ function awardHeart() {
   if (!slot) return;
   slot.style.color = HEART_COLORS[G.hearts - 1] || "#FF0000";
   slot.classList.add("h-got", "h-pop");
+}
+
+/* ---------- Тёмный экран награды: 7 сердец в раскладке референса ---------- */
+
+// Расставить SVG-сердца по слотам оверлея (один раз — зажжённые не трогаем)
+function buildAwardOverlay() {
+  heartAward.querySelectorAll(".ha-slot").forEach((slot) => {
+    if (!slot.innerHTML) slot.innerHTML = HEART_SVG;
+  });
+}
+buildAwardOverlay();
+
+// Показать оверлей и зажечь сердце с номером idx (0-based).
+// Ранее зажжённые остаются гореть до конца игры.
+function showHeartAward(idx) {
+  const slot = heartAward.querySelector('[data-heart="' + idx + '"]');
+  if (slot) {
+    slot.style.setProperty("--hc", HEART_COLORS[idx] || "#FF0000");
+    slot.classList.add("lit");
+  }
+  heartAward.hidden = false;
+  playRight();
+}
+
+function hideHeartAward() {
+  heartAward.hidden = true; // зажжённые сердца сохраняются
+}
+
+// Полное гашение — только при старте новой игры
+function clearAwardHearts() {
+  heartAward.querySelectorAll(".ha-slot").forEach((s) => {
+    s.classList.remove("lit");
+    s.style.removeProperty("--hc");
+  });
+  heartAward.hidden = true;
 }
 
 const hero = { x: 40, y: 118 };
@@ -772,11 +808,16 @@ function axis() {
 /* ===================== Игровая логика ======================== */
 
 function showScreen(screen) {
-  [startScreen, gameScreen, portalScreen, impostorScreen, screamScreen, surviveScreen].forEach(
-    (s) => {
-      s.classList.remove("active");
-    },
-  );
+  [
+    startScreen,
+    gameScreen,
+    portalScreen,
+    impostorScreen,
+    screamScreen,
+    surviveScreen,
+  ].forEach((s) => {
+    s.classList.remove("active");
+  });
   screen.classList.add("active");
 }
 
@@ -785,6 +826,7 @@ function startGame() {
   G.hp = MAX_HP;
   G.doneCount = 0;
   G.hearts = 0;
+  clearAwardHearts();
   G.mode = "walk";
   G.dir = "right";
   G.moving = false;
@@ -904,9 +946,10 @@ function chooseAnswer(i) {
     buttons[i].classList.add("correct");
     battleText.classList.add("ok");
     battleText.textContent = "Right!!!";
-    playRight();
     G.hearts++;
     awardHeart();
+    // Тёмный экран награды: зажигаем заработанное сердце на месте из референса
+    showHeartAward(G.hearts - 1);
   } else {
     buttons[i].classList.add("wrong");
     if (q.correct >= 0 && q.correct < buttons.length)
@@ -919,6 +962,7 @@ function chooseAnswer(i) {
 
   setTimeout(
     () => {
+      hideHeartAward();
       battleEl.hidden = true;
       if (G.hp <= 0) {
         showImpostor();
@@ -936,7 +980,7 @@ function chooseAnswer(i) {
       if (right) blip(523, 0.06, "triangle", 0.08);
       G.mode = "walk";
     },
-    right ? 1100 : 1300,
+    right ? 2100 : 1300,
   );
 }
 
