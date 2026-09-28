@@ -85,15 +85,17 @@
         </div>
 
         <!-- ====== ТЁМНЫЙ ЭКРАН НАГРАДЫ: раскладка сердец как на референсе ====== -->
-        <!-- центр — красное, сверху оранжевое, снизу голубое, по бокам
-             жёлтое/розовое и зелёное/синее. Гаснут при запуске новой игры -->
+        <!-- Позиции фиксированы по цвету: сверху оранжевое, слева-сверху
+             жёлтое, справа-сверху розовое, в центре красное, слева-снизу
+             зелёное, справа-снизу синее, снизу голубое. data-heart — индекс
+             цвета в HEART_COLORS (порядок получения). Гаснут при новой игре -->
         <div id="heart-award" hidden>
-          <span class="ha-slot" data-heart="1" style="--x: 50%; --y: 12%"></span>
+          <span class="ha-slot" data-heart="5" style="--x: 50%; --y: 12%"></span>
           <span class="ha-slot" data-heart="4" style="--x: 24%; --y: 30%"></span>
-          <span class="ha-slot" data-heart="6" style="--x: 76%; --y: 30%"></span>
-          <span class="ha-slot" data-heart="0" style="--x: 50%; --y: 50%"></span>
+          <span class="ha-slot" data-heart="0" style="--x: 76%; --y: 30%"></span>
+          <span class="ha-slot" data-heart="6" style="--x: 50%; --y: 50%"></span>
           <span class="ha-slot" data-heart="3" style="--x: 24%; --y: 70%"></span>
-          <span class="ha-slot" data-heart="5" style="--x: 76%; --y: 70%"></span>
+          <span class="ha-slot" data-heart="1" style="--x: 76%; --y: 70%"></span>
           <span class="ha-slot" data-heart="2" style="--x: 50%; --y: 88%"></span>
         </div>
       </div>

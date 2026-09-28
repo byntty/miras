@@ -249,6 +249,28 @@ function playWrong() {
   o.stop(t + 0.35);
 }
 
+// Шаг: короткий тихий шорох, чередуем «лево/право» по высоте
+function playStep() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const len = Math.floor(audioCtx.sampleRate * 0.06);
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = G.stepFlip ? 500 : 380; // чередование ног
+  G.stepFlip = !G.stepFlip;
+  const g = audioCtx.createGain();
+  g.gain.value = 0.12;
+  src.connect(lp);
+  lp.connect(g);
+  g.connect(audioCtx.destination);
+  src.start(t);
+}
+
 // «Пуф» — свеча гаснет
 function playPuff() {
   if (!audioCtx) return;
@@ -647,18 +669,20 @@ const G = {
   battleNpc: -1,
   selectedIndex: 0,
   answered: false, // ответ уже дан в текущем бою
+  stepT: 0, // таймер между шагами
+  stepFlip: false, // чередование ног для звука
 };
 
 /* ---------- Сердца за верные ответы (цвета душ Undertale) ---------- */
 
-// Порядок получения: розовое, голубое, синее, зелёное, оранжевое, жёлтое, красное
+// Порядок получения: розовое, синее, голубое, зелёное, жёлтое, оранжевое, красное
 const HEART_COLORS = [
   "#FF6BD6",
-  "#00D2FF",
   "#2E5BFF",
+  "#00D2FF",
   "#00D000",
-  "#FF9E00",
   "#FFFF00",
+  "#FF9E00",
   "#FF0000",
 ];
 
@@ -1191,15 +1215,21 @@ function updateWalk(dt) {
   if (okX) hero.x = nx;
   if (okY) hero.y = ny;
 
-  // Анимация ходьбы
+  // Анимация ходьбы + звук шагов
   if (G.moving) {
     G.animT += dt;
     if (G.animT > 0.14) {
       G.animT = 0;
       G.walkFrame++;
     }
+    G.stepT += dt;
+    if (G.stepT > 0.26) {
+      G.stepT = 0;
+      playStep();
+    }
   } else {
     G.animT = 0;
+    G.stepT = 0;
   }
 
   // Подсказка под сценой
